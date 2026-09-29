@@ -1,0 +1,55 @@
+# goods-shelf — self-hosted display cabinet for anime merchandise (谷子).
+#
+#   docker compose up -d --build            → http://<host>:8090, data in ./data
+#
+# Everything is configured in .env (copy .env.example). Optional parts are compose profiles,
+# enabled with COMPOSE_PROFILES in .env (comma-separated):
+#   search     auto image search via a private SearXNG (also set SEARXNG_URL=http://searxng:8080)
+#   tailscale  HTTPS on your tailnet as its own device, e.g. https://goods-shelf.<tailnet>.ts.net
+# Host-specific extras (e.g. device names on /logs) go in docker-compose.override.yml — see
+# docker-compose.override.example.yml.
+services:
+  goods-shelf:
+    build: .
+    image: goods-shelf:${GS_TAG:-latest}
+    container_name: ${GS_NAME:-goods-shelf}
+    restart: unless-stopped
+    user: "${GS_UID:-1000}:${GS_GID:-1000}"
+    ports:
+      - "${GS_PORT:-8090}:8090"
+    volumes:
+      - ${GS_DATA:-./data}:/data
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SEARXNG_URL: ${SEARXNG_URL:-}          # empty = auto image search off
+      ACTIVITY_LOG: ${ACTIVITY_LOG:-on}      # off = record nothing for /logs (no IPs / user agents)
+      # Reverse proxies (Tailscale sidecar, Tailscale Serve, …) sit on the docker network / host;
+      # trust their X-Forwarded-For so /logs sees real client IPs.
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-172.16.0.0/12}
+
+  searxng:
+    image: searxng/searxng:latest
+    profiles: ["search"]
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-please-change-me}
+
+  tailscale:
+    image: tailscale/tailscale:stable
+    profiles: ["tailscale"]
+    hostname: ${TS_HOSTNAME:-goods-shelf}
+    restart: unless-stopped
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}          # only needed for the first login
+      TS_AUTH_ONCE: "true"                 # restarts reuse ./tailscale/state instead of re-logging in
+      TS_HOSTNAME: ${TS_HOSTNAME:-goods-shelf}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"                 # no /dev/net/tun or extra capabilities needed
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/state:/var/lib/tailscale
+      - ./tailscale/serve.json:/config/serve.json:ro
+    depends_on:
+      - goods-shelf

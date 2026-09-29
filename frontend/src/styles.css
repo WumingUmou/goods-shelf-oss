@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/* ── Design tokens ─────────────────────────────────────────────────────────
+ * Gallery-exhibition palette inspired by FigureCollector "Shōjo-Noir":
+ * warm ink / porcelain surfaces, one vermilion accent, antique gold hairlines.
+ * Light is the base; dark applies via system preference or data-theme.
+ * ------------------------------------------------------------------------ */
+:root {
+  --canvas: oklch(0.965 0.008 85);
+  --surface: oklch(0.995 0.004 85);
+  --well: oklch(0.93 0.012 80);
+  --well-spot: oklch(0.985 0.006 85);
+  --ink: oklch(0.26 0.02 55);
+  --muted: oklch(0.45 0.02 55);
+  --line: oklch(0.26 0.02 55 / 0.12);
+  --accent: oklch(0.5 0.19 25);
+  --accent-ink: oklch(0.99 0 0);
+  --gold: oklch(0.52 0.13 72);
+  --scrim: oklch(0.2 0.01 50 / 0.5);
+  --shadow: 0 1px 2px oklch(0.2 0.02 55 / 0.06), 0 8px 24px -12px oklch(0.2 0.02 55 / 0.18);
+  --card-ratio: 1 / 1;
+  /* Instance appearance (设置 → 外观) is written into these by <BrandStyle> at runtime. */
+  --bar-bg: var(--bar-light-bg, #f3eee6);
+  --bar-ink: var(--bar-light-ink, #3a2d24);
+  --pattern: var(--pattern-light, none);
+  --bar-shade: 94%;   /* bottom of the bar gradient: % of bar colour mixed with black */
+  --bar-glow: 85%;    /* top-left highlight: % of bar colour mixed with white */
+  --bar-field: oklch(1 0 0 / 0.55);   /* search field / switches inside the bar */
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: oklch(0.14 0.005 50);
+    --bar-bg: var(--bar-dark-bg, #1f1a16);
+    --bar-ink: var(--bar-dark-ink, #efe5d6);
+    --pattern: var(--pattern-dark, none);
+    --bar-shade: 62%;
+    --bar-glow: 97%;
+    --bar-field: oklch(0 0 0 / 0.32);
+    --surface: oklch(0.19 0.008 50);
+    --well: oklch(0.11 0.004 50);
+    --well-spot: oklch(0.2 0.01 60);
+    --ink: oklch(0.92 0.03 75);
+    --muted: oklch(0.92 0.03 75 / 0.62);
+    --line: oklch(0.92 0.03 75 / 0.1);
+    --accent: oklch(0.62 0.19 25);
+    --accent-ink: oklch(0.14 0.005 50);
+    --gold: oklch(0.78 0.1 80);
+    --scrim: oklch(0.08 0.004 50 / 0.72);
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -12px oklch(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas: oklch(0.14 0.005 50);
+  --bar-bg: var(--bar-dark-bg, #1f1a16);
+  --bar-ink: var(--bar-dark-ink, #efe5d6);
+  --pattern: var(--pattern-dark, none);
+  --bar-shade: 62%;
+  --bar-glow: 97%;
+  --bar-field: oklch(0 0 0 / 0.32);
+  --surface: oklch(0.19 0.008 50);
+  --well: oklch(0.11 0.004 50);
+  --well-spot: oklch(0.2 0.01 60);
+  --ink: oklch(0.92 0.03 75);
+  --muted: oklch(0.92 0.03 75 / 0.62);
+  --line: oklch(0.92 0.03 75 / 0.1);
+  --accent: oklch(0.62 0.19 25);
+  --accent-ink: oklch(0.14 0.005 50);
+  --gold: oklch(0.78 0.1 80);
+  --scrim: oklch(0.08 0.004 50 / 0.72);
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -12px oklch(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+/* Type scale ~1–2px larger than Tailwind defaults for comfortable reading. */
+@theme {
+  --text-xs: 0.8125rem;   /* 13px */
+  --text-sm: 0.9375rem;   /* 15px */
+  --text-base: 1.0625rem; /* 17px */
+  --text-lg: 1.25rem;     /* 20px */
+  --text-xl: 1.4375rem;   /* 23px */
+  --text-2xl: 1.75rem;    /* 28px */
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-well: var(--well);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-gold: var(--gold);
+  --color-scrim: var(--scrim);
+  --font-display: "Fraunces", "Noto Serif SC", "Songti SC", serif;
+  --font-sans: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+html {
+  background: var(--canvas);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  margin: 0;
+  /* transparent so the fixed pattern layer below shows through (html paints the canvas colour) */
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  min-height: 100dvh;
+}
+
+/* Background pattern (设置 → 外观) on its own fixed layer: content scrolls, the pattern stays put.
+ * (background-attachment: fixed is ignored by iOS Safari, a fixed pseudo-element is not.)
+ * Phones show the tile at half size so more of it fits on screen. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--pattern) repeat;
+  background-size: var(--pattern-size, 640px) var(--pattern-size, 640px);
+}
+@media (max-width: 767px) {
+  body::before { background-size: calc(var(--pattern-size, 640px) / 2) calc(var(--pattern-size, 640px) / 2); }
+}
+
+/* Floating add button in the top-bar colours of the active scheme. */
+.fab-theme {
+  color: var(--bar-ink);
+  background: linear-gradient(160deg, color-mix(in oklch, var(--bar-bg) var(--bar-glow), white),
+    color-mix(in oklch, var(--bar-bg) var(--bar-shade), black));
+  border: 1.5px solid color-mix(in oklch, var(--bar-ink) 35%, transparent);
+  box-shadow: 0 10px 22px -10px color-mix(in oklch, var(--bar-ink) 55%, transparent),
+    inset 0 1px 0 oklch(1 0 0 / 0.35);
+}
+
+/* Photo well: spot-lit recess so transparent / contain images sit on a stage. */
+.well {
+  background:
+    radial-gradient(120% 90% at 50% 35%, var(--well-spot) 0%, transparent 70%),
+    var(--well);
+}
+
+/* Top app bar. Palette tokens are redefined inside the bar from the instance's two bar colours
+ * (background + ink, per scheme), so tabs / search / icons adapt automatically. */
+.app-bar {
+  --canvas: var(--bar-bg);                                            /* overlays inside the bar */
+  --surface: var(--bar-field);                                        /* search field, switches */
+  --ink: var(--bar-ink);                                              /* text, active tab */
+  --muted: color-mix(in oklch, var(--bar-ink) 70%, transparent);
+  --line: color-mix(in oklch, var(--bar-ink) 16%, transparent);
+  --accent: var(--bar-ink);
+  --accent-ink: var(--bar-bg);
+  --gold: color-mix(in oklch, var(--bar-ink) 80%, transparent);
+  color: var(--ink);
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in oklch, var(--bar-bg) var(--bar-glow), white), transparent 65%),
+    linear-gradient(180deg, var(--bar-bg), color-mix(in oklch, var(--bar-bg) var(--bar-shade), black));
+  border-bottom: 1px solid color-mix(in oklch, var(--bar-ink) 26%, transparent);
+  box-shadow: 0 6px 18px -14px color-mix(in oklch, var(--bar-ink) 50%, transparent);
+}
+.app-bar ::placeholder { color: var(--muted); }
+
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  opacity: 0.55;
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* iOS installed app (standalone + black-translucent status bar): content runs under the status
+ * bar / Dynamic Island and the home indicator. Insets are variables so tests can simulate them. */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+.safe-top { padding-top: var(--sat); }
+.safe-x { padding-left: var(--sal); padding-right: var(--sar); }
+.pb-safe { padding-bottom: max(1rem, var(--sab)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

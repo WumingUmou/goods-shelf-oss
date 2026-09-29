@@ -1,0 +1,7 @@
+# Copy to docker-compose.override.yml (compose loads it automatically) for host-specific extras.
+services:
+  goods-shelf:
+    volumes:
+      # Show Tailscale device names instead of IPs on the /logs page (read-only local API socket).
+      # Only if tailscaled runs on this host.
+      - /var/run/tailscale:/var/run/tailscale:ro

@@ -1,0 +1,20 @@
+# SearXNG for goods-shelf auto image search. Internal only (no published port).
+# Engines: duckduckgo images tends to get suspended after a query or two, sogou images returns nothing.
+use_default_settings:
+  engines:
+    keep_only: [bing images, google images, baidu images]
+general:
+  instance_name: goods-shelf-search
+search:
+  safe_search: 0
+  default_lang: zh-CN
+  formats: [html, json]
+server:
+  # secret_key comes from the SEARXNG_SECRET env var (.env)
+  limiter: false
+  image_proxy: false
+engines:
+  - name: google images
+    disabled: false
+  - name: baidu images
+    disabled: false

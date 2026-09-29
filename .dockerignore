@@ -1,0 +1,12 @@
+data
+data-*
+backups
+logs
+temp
+tailscale/state
+.env
+.env.*
+frontend/node_modules
+frontend/dist
+**/__pycache__
+.git

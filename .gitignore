@@ -1,0 +1,18 @@
+# runtime data (database + images) — never commit
+data/
+data-*/
+backups/
+logs/
+temp/
+tailscale/state/
+# local configuration
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+# build / tooling
+node_modules/
+dist/
+*.tsbuildinfo
+__pycache__/
+.venv/
